@@ -17,7 +17,6 @@ var config string statsHost;                    // The hostname or IP of the UTS
 var config int statsPort;                       // Port of the UTStats server.
 var config string statsPath;                    // Path of the UTStats script on the server.
 
-
 /***************************************************************************************************
  *
  *  $DESCRIPTION  Automatically installs the plugin.
@@ -26,10 +25,10 @@ var config string statsPath;                    // Path of the UTStats script on
  **************************************************************************************************/
 function install() {
 
-	lastInstalledVersion = xControl.versionNum;
+  lastInstalledVersion = xControl.versionNum;
 
-	// Save updated config or create new one
-	saveconfig();
+  // Save updated config or create new one
+  saveconfig();
 }
 
 

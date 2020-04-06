@@ -2,6 +2,13 @@ class NexgenUTStatsHTTP extends UBrowserHTTPClient;
 
 var NexgenUTStats xControl;             // controller.
 
+var string TopPlayers[3];
+var string BestAttCTF[3];
+var string BestDefCTF[3];
+var string MostKills;      
+var string MostTime;     
+var string MostCovers;  
+
 /***************************************************************************************************
  *
  *  $DESCRIPTION  Initializes the UTStats statistics retriever client.
@@ -9,25 +16,23 @@ var NexgenUTStats xControl;             // controller.
  *
  **************************************************************************************************/
 function preBeginPlay() {
-	local string url;
-	
-	super.preBeginPlay();
-	
-	// Get controller.
-	foreach allActors(class'NexgenUTStats', xControl) {
-		break;
-	}
-	
-	log("NexgenUTStatsHTTP: browsing ...");
-	
-	// Construct url to retrieve the stats.
-	url = NexgenUTStatsConfig(xControl.xConf).statsPath;
-	
-	// Retrieve stats.
-	browse(NexgenUTStatsConfig(xControl.xConf).statsHost, url, NexgenUTStatsConfig(xControl.xConf).statsPort);
+  local string url;
+  
+  super.preBeginPlay();
+  
+  // Get controller.
+  foreach allActors(class'NexgenUTStats', xControl) {
+    break;
+  }
+  
+  xControl.control.nscLog("NexgenUTStatsHTTP: browsing ...");
+  
+  // Construct url to retrieve the stats.
+  url = xControl.conf.statsPath;
+  
+  // Retrieve stats.
+  browse(xControl.conf.statsHost, url, xControl.conf.statsPort);
 }
-
-
 
 /***************************************************************************************************
  *
@@ -36,11 +41,8 @@ function preBeginPlay() {
  *
  **************************************************************************************************/
 function HTTPError(int code) {
-  log("NexgenUTStatsHTTP: Unable to connect to host. Error"@code);
-	xControl.control.nscLog(class'NexgenUtil'.static.format("Unable to connect to host.", code));
+  xControl.control.nscLog("NexgenUTStatsHTTP: Unable to connect to host. Error"@code);
 }
-
-
 
 /***************************************************************************************************
  *
@@ -50,24 +52,31 @@ function HTTPError(int code) {
  *
  **************************************************************************************************/
 function HTTPReceivedData(string data) {
-	local string remaining;
-	local string currLine;
-	
-	// Process data.
-	remaining = data;
-	do {
-		currLine = class'NexgenUtil'.static.trim(class'NexgenUtil'.static.getNextLine(remaining));
-		if (currLine != "") {
-			processData(currLine);
-		}
-	} until (remaining == "");
-	
-	log("NexgenUTStatsHTTP: done.");
-	xControl.StatsData.bStatsAvailable = True;
-  xControl.StatsDataReceived();
+  local string remaining;
+  local string currLine;
+  local NexgenUTStatsDC statsData;
+  local int i;
+  
+  // Process data.
+  remaining = data;
+  do {
+    currLine = class'NexgenUtil'.static.trim(class'NexgenUtil'.static.getNextLine(remaining));
+    if (currLine != "") {
+      processData(currLine);
+    }
+  } until (remaining == "");
+  
+  xControl.control.nscLog("NexgenUTStatsHTTP: done.");
+  
+  // Fill shared data container
+  statsData = spawn(class'NexgenUTStatsDC');
+  for(i=0; i<arrayCount(topPlayers); i++) statsData.topPlayers[i] = topPlayers[i];
+  for(i=0; i<arrayCount(bestAttCTF); i++) statsData.bestAttCTF[i] = bestAttCTF[i];
+  for(i=0; i<arrayCount(bestDefCTF); i++) statsData.topPlayers[i] = bestDefCTF[i];
+  statsData.mostKills = mostKills;
+  statsData.mostTime  = mostTime;
+  statsData.mostCovers= mostCovers;
 }
-
-
 
 /***************************************************************************************************
  *
@@ -77,52 +86,49 @@ function HTTPReceivedData(string data) {
  *
  **************************************************************************************************/
 function processData(string str) {
-	local string cmdType;
-	local string cmdArgs[10];
-	local int index;
-	
-	// Parse command.
-	if (class'NexgenUtil'.static.parseCmd(str, cmdType, cmdArgs)) {
-		switch (cmdType) {
-			case "topplayers": // Add a new player list.
+  local string cmdType;
+  local string cmdArgs[10];
+  local int index;
+  
+  // Parse command.
+  if (class'NexgenUtil'.static.parseCmd(str, cmdType, cmdArgs)) {
+    switch (cmdType) {
+      case "topplayers":
         while(cmdArgs[index] != "" && index<ArrayCount(cmdArgs)) {
-           xControl.StatsData.TopPlayers[index] = cmdArgs[index];
+           topPlayers[index] = cmdArgs[index];
            index++;
         }
-			break;
-		  case "bestattctf": // Add a new player list.
+      break;
+      case "bestattctf":
         while(cmdArgs[index] != "" && index<ArrayCount(cmdArgs)) {
-           xControl.StatsData.BestAttCTF[index] = cmdArgs[index];
+           bestAttCTF[index] = cmdArgs[index];
            index++;
         }
-			break;
-      case "bestdefctf": // Add a new player list.
+      break;
+      case "bestdefctf":
         while(cmdArgs[index] != "" && index<ArrayCount(cmdArgs)) {
-           xControl.StatsData.BestDefCTF[index] = cmdArgs[index];
+           bestDefCTF[index] = cmdArgs[index];
            index++;
         }
-			break;
-     case "mostkills": // Add a new player list.
-       if(cmdArgs[index] != "") xControl.StatsData.MostKills = cmdArgs[0];
-			break;
-     case "mosttime": // Add a new player list.
-       if(cmdArgs[index] != "") xControl.StatsData.MostTime = cmdArgs[0];
-			break;
-			case "mostcovers": // Add a new player list.
-       if(cmdArgs[index] != "") xControl.StatsData.MostCovers = cmdArgs[0];
-			break;
-		}
-	}
+      break;
+     case "mostkills":
+       if(cmdArgs[index] != "") mostKills = cmdArgs[0];
+      break;
+     case "mosttime":
+       if(cmdArgs[index] != "") mostTime = cmdArgs[0];
+      break;
+      case "mostcovers":
+       if(cmdArgs[index] != "") mostCovers = cmdArgs[0];
+      break;
+    }
+  }
 }
-
-
 
 /***************************************************************************************************
  *
  *  $DESCRIPTION  Default properties block.
  *
  **************************************************************************************************/
-
 defaultproperties
 {
      RemoteRole=ROLE_None
