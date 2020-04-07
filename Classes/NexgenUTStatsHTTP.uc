@@ -72,7 +72,7 @@ function HTTPReceivedData(string data) {
   statsData = spawn(class'NexgenUTStatsDC');
   for(i=0; i<arrayCount(topPlayers); i++) statsData.topPlayers[i] = topPlayers[i];
   for(i=0; i<arrayCount(bestAttCTF); i++) statsData.bestAttCTF[i] = bestAttCTF[i];
-  for(i=0; i<arrayCount(bestDefCTF); i++) statsData.topPlayers[i] = bestDefCTF[i];
+  for(i=0; i<arrayCount(bestDefCTF); i++) statsData.bestDefCTF[i] = bestDefCTF[i];
   statsData.mostKills = mostKills;
   statsData.mostTime  = mostTime;
   statsData.mostCovers= mostCovers;
